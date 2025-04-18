@@ -10,6 +10,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@remix-run/netlify": "^1.19.3",
     "@remix-run/node": "*",
     "@remix-run/react": "^2.16.5",
     "@remix-run/serve": "*",
