@@ -2,7 +2,7 @@
  * By default, Remix will handle generating the HTTP Response for you.
  * You are free to delete this file if you'd like to, but if you ever want it revealed again, you can run `npx remix reveal` â¨
  * For more information, see https://remix.run/file-conventions/entry.server
- */
+ *
 
 import { PassThrough } from "node:stream";
 
@@ -136,5 +136,26 @@ function handleBrowserRequest(
     );
 
     setTimeout(abort, ABORT_DELAY);
+  });
+}*/
+import * as React from "react";
+import { RemixServer } from "@remix-run/react";
+import { renderToString } from "react-dom/server";
+
+export default function handleRequest(
+  request: Request,
+  responseStatusCode: number,
+  responseHeaders: Headers,
+  remixContext: any
+) {
+  const markup = renderToString(
+    <RemixServer context={remixContext} url={request.url} />
+  );
+
+  responseHeaders.set("Content-Type", "text/html");
+
+  return new Response(`<!DOCTYPE html>${markup}`, {
+    status: responseStatusCode,
+    headers: responseHeaders,
   });
 }

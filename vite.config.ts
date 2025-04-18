@@ -1,16 +1,23 @@
-import { vitePlugin as remix } from "@remix-run/dev";
 import { defineConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
+import { vitePlugin as remix } from "@remix-run/dev";
+import path from "path";
 
 export default defineConfig({
+  build: {
+    outDir: "build/client",
+  },
+  ssr: {
+    noExternal: ["remix"],
+  },
   plugins: [
     remix({
-      future: {
-        v3_fetcherPersist: true,
-        v3_relativeSplatPath: true,
-        v3_throwAbortReason: true,
-      },
+      basename: "/",
+      buildDirectory: "build",
     }),
-    tsconfigPaths(),
   ],
+  resolve: {
+    alias: {
+      "~": path.resolve(__dirname, "app"),
+    },
+  },
 });

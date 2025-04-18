@@ -1,102 +1,15 @@
 import { jsx, jsxs } from "react/jsx-runtime";
-import { PassThrough } from "node:stream";
-import { createReadableStreamFromReadable } from "@remix-run/node";
 import { RemixServer, Link, Meta, Links, Outlet, ScrollRestoration, Scripts, useNavigate, Form } from "@remix-run/react";
-import { isbot } from "isbot";
-import { renderToPipeableStream } from "react-dom/server";
+import { renderToString } from "react-dom/server";
 import { useState, useEffect } from "react";
-const ABORT_DELAY = 5e3;
-function handleRequest(request, responseStatusCode, responseHeaders, remixContext, loadContext) {
-  return isbot(request.headers.get("user-agent") || "") ? handleBotRequest(
-    request,
-    responseStatusCode,
-    responseHeaders,
-    remixContext
-  ) : handleBrowserRequest(
-    request,
-    responseStatusCode,
-    responseHeaders,
-    remixContext
+function handleRequest(request, responseStatusCode, responseHeaders, remixContext) {
+  const markup = renderToString(
+    /* @__PURE__ */ jsx(RemixServer, { context: remixContext, url: request.url })
   );
-}
-function handleBotRequest(request, responseStatusCode, responseHeaders, remixContext) {
-  return new Promise((resolve, reject) => {
-    let shellRendered = false;
-    const { pipe, abort } = renderToPipeableStream(
-      /* @__PURE__ */ jsx(
-        RemixServer,
-        {
-          context: remixContext,
-          url: request.url,
-          abortDelay: ABORT_DELAY
-        }
-      ),
-      {
-        onAllReady() {
-          shellRendered = true;
-          const body = new PassThrough();
-          const stream = createReadableStreamFromReadable(body);
-          responseHeaders.set("Content-Type", "text/html");
-          resolve(
-            new Response(stream, {
-              headers: responseHeaders,
-              status: responseStatusCode
-            })
-          );
-          pipe(body);
-        },
-        onShellError(error) {
-          reject(error);
-        },
-        onError(error) {
-          responseStatusCode = 500;
-          if (shellRendered) {
-            console.error(error);
-          }
-        }
-      }
-    );
-    setTimeout(abort, ABORT_DELAY);
-  });
-}
-function handleBrowserRequest(request, responseStatusCode, responseHeaders, remixContext) {
-  return new Promise((resolve, reject) => {
-    let shellRendered = false;
-    const { pipe, abort } = renderToPipeableStream(
-      /* @__PURE__ */ jsx(
-        RemixServer,
-        {
-          context: remixContext,
-          url: request.url,
-          abortDelay: ABORT_DELAY
-        }
-      ),
-      {
-        onShellReady() {
-          shellRendered = true;
-          const body = new PassThrough();
-          const stream = createReadableStreamFromReadable(body);
-          responseHeaders.set("Content-Type", "text/html");
-          resolve(
-            new Response(stream, {
-              headers: responseHeaders,
-              status: responseStatusCode
-            })
-          );
-          pipe(body);
-        },
-        onShellError(error) {
-          reject(error);
-        },
-        onError(error) {
-          responseStatusCode = 500;
-          if (shellRendered) {
-            console.error(error);
-          }
-        }
-      }
-    );
-    setTimeout(abort, ABORT_DELAY);
+  responseHeaders.set("Content-Type", "text/html");
+  return new Response(`<!DOCTYPE html>${markup}`, {
+    status: responseStatusCode,
+    headers: responseHeaders
   });
 }
 const entryServer = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
@@ -566,11 +479,11 @@ const route4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   default: Index,
   meta
 }, Symbol.toStringTag, { value: "Module" }));
-const serverManifest = { "entry": { "module": "/assets/entry.client-sJQzjqNw.js", "imports": ["/assets/components-CTKjQCnL.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/root-Bfpx-Eyj.js", "imports": ["/assets/components-CTKjQCnL.js"], "css": ["/assets/root-xXtehpwV.css"] }, "routes/transactions._index": { "id": "routes/transactions._index", "parentId": "root", "path": "transactions", "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/transactions._index-B9qnonzk.js", "imports": ["/assets/components-CTKjQCnL.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/products._index": { "id": "routes/products._index", "parentId": "root", "path": "products", "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/products._index-BNTbo5yc.js", "imports": ["/assets/components-CTKjQCnL.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/products.new": { "id": "routes/products.new", "parentId": "root", "path": "products/new", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/products.new-ENvxHMgE.js", "imports": ["/assets/components-CTKjQCnL.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/_index": { "id": "routes/_index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/_index-BGF7HF_Q.js", "imports": ["/assets/components-CTKjQCnL.js"], "css": [] } }, "url": "/assets/manifest-5a33ed46.js", "version": "5a33ed46" };
+const serverManifest = { "entry": { "module": "/assets/entry.client-DCCX-5W3.js", "imports": ["/assets/components-CTKjQCnL.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/root-Bfpx-Eyj.js", "imports": ["/assets/components-CTKjQCnL.js"], "css": ["/assets/root-xXtehpwV.css"] }, "routes/transactions._index": { "id": "routes/transactions._index", "parentId": "root", "path": "transactions", "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/transactions._index-B9qnonzk.js", "imports": ["/assets/components-CTKjQCnL.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/products._index": { "id": "routes/products._index", "parentId": "root", "path": "products", "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/products._index-BNTbo5yc.js", "imports": ["/assets/components-CTKjQCnL.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/products.new": { "id": "routes/products.new", "parentId": "root", "path": "products/new", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/products.new-ENvxHMgE.js", "imports": ["/assets/components-CTKjQCnL.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/_index": { "id": "routes/_index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/_index-BGF7HF_Q.js", "imports": ["/assets/components-CTKjQCnL.js"], "css": [] } }, "url": "/assets/manifest-79486253.js", "version": "79486253" };
 const mode = "production";
 const assetsBuildDirectory = "build/client";
 const basename = "/";
-const future = { "v3_fetcherPersist": true, "v3_relativeSplatPath": true, "v3_throwAbortReason": true, "v3_routeConfig": false, "v3_singleFetch": false, "v3_lazyRouteDiscovery": false, "unstable_optimizeDeps": false };
+const future = { "v3_fetcherPersist": false, "v3_relativeSplatPath": false, "v3_throwAbortReason": false, "v3_routeConfig": false, "v3_singleFetch": false, "v3_lazyRouteDiscovery": false, "unstable_optimizeDeps": false };
 const isSpaMode = false;
 const publicPath = "/";
 const entry = { module: entryServer };
