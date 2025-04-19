@@ -10,5 +10,7 @@ module.exports = {
       v2_normalizeFormMethod: true,
       v2_routeConvention: true,
     },
-    devServerPort: 8002
-  };
+    devServerPort: 8002,
+    assetsBuildDirectory: "build/client/assets",
+    publicPath: "/build/client/assets/"
+};
