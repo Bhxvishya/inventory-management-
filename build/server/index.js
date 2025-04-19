@@ -1,9 +1,9 @@
 import { jsx, jsxs } from "react/jsx-runtime";
 import { PassThrough } from "stream";
-import { RemixServer, Link, Meta, Links, Outlet, ScrollRestoration, Scripts, useNavigate, Form, useLoaderData } from "@remix-run/react";
+import { RemixServer, Link, Meta, Links, Outlet, ScrollRestoration, Scripts, useNavigate, Form } from "@remix-run/react";
 import * as isbot from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
-import { createReadableStreamFromReadable, json } from "@remix-run/node";
+import { createReadableStreamFromReadable } from "@remix-run/node";
 import { useState, useEffect } from "react";
 const ABORT_DELAY = 5e3;
 function handleRequest(request, responseStatusCode, responseHeaders, remixContext) {
@@ -127,13 +127,18 @@ function Header() {
     ] })
   ] }) }) }) });
 }
-function getHeaders(loaderHeaders = new Headers()) {
-  const headers2 = new Headers(loaderHeaders);
-  headers2.set(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'"
-  );
-  return headers2;
+function headers() {
+  return {
+    "Content-Security-Policy": [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' data: https:",
+      "font-src 'self' https://fonts.gstatic.com",
+      "connect-src 'self'",
+      "frame-ancestors 'none'"
+    ].join("; ")
+  };
 }
 const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -147,9 +152,6 @@ const links = () => [
     href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
   }
 ];
-function headers() {
-  return getHeaders();
-}
 function App() {
   return /* @__PURE__ */ jsxs("html", { lang: "en", className: "h-full bg-gray-100", children: [
     /* @__PURE__ */ jsxs("head", { children: [
@@ -520,22 +522,19 @@ const route3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   __proto__: null,
   default: NewProduct
 }, Symbol.toStringTag, { value: "Module" }));
-async function loader() {
-  const products = getProducts();
-  const transactions = getTransactions();
-  const totalProducts = products.length;
-  const totalStock = products.reduce((sum, product) => sum + product.quantity, 0);
-  const lowStockProducts = products.filter((product) => product.quantity < 10);
-  const recentTransactions = transactions.slice(-5);
-  return json({
-    totalProducts,
-    totalStock,
-    lowStockProducts,
-    recentTransactions
-  });
-}
 function Dashboard() {
-  const { totalProducts, totalStock, lowStockProducts, recentTransactions } = useLoaderData();
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalStock, setTotalStock] = useState(0);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  useEffect(() => {
+    const products = getProducts();
+    const transactions = getTransactions();
+    setTotalProducts(products.length);
+    setTotalStock(products.reduce((sum, product) => sum + product.quantity, 0));
+    setLowStockProducts(products.filter((product) => product.quantity < 10));
+    setRecentTransactions(transactions.slice(-5));
+  }, []);
   return /* @__PURE__ */ jsxs("div", { className: "max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8", children: [
     /* @__PURE__ */ jsx("h1", { className: "text-3xl font-bold text-gray-900 mb-6", children: "Dashboard" }),
     /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8", children: [
@@ -582,8 +581,7 @@ function Dashboard() {
 }
 const route4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  default: Dashboard,
-  loader
+  default: Dashboard
 }, Symbol.toStringTag, { value: "Module" }));
 const meta = () => {
   return [
@@ -636,7 +634,7 @@ const route5 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   default: Index,
   meta
 }, Symbol.toStringTag, { value: "Module" }));
-const serverManifest = { "entry": { "module": "/assets/entry.client-CR6ePU5x.js", "imports": ["/assets/components-8xdznDkx.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/root-D5--ZP3u.js", "imports": ["/assets/components-8xdznDkx.js"], "css": ["/assets/root-Dr1bkvVh.css"] }, "routes/transactions._index": { "id": "routes/transactions._index", "parentId": "root", "path": "transactions", "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/transactions._index-B7e2x3Gj.js", "imports": ["/assets/components-8xdznDkx.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/products._index": { "id": "routes/products._index", "parentId": "root", "path": "products", "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/products._index-CgZQILyS.js", "imports": ["/assets/components-8xdznDkx.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/products.new": { "id": "routes/products.new", "parentId": "root", "path": "products/new", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/products.new-dCyakr9p.js", "imports": ["/assets/components-8xdznDkx.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/dashboard": { "id": "routes/dashboard", "parentId": "root", "path": "dashboard", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/dashboard-BpVymz0w.js", "imports": ["/assets/components-8xdznDkx.js"], "css": [] }, "routes/_index": { "id": "routes/_index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/_index-Bj7pYZeS.js", "imports": ["/assets/components-8xdznDkx.js"], "css": [] } }, "url": "/assets/manifest-6bb0d77e.js", "version": "6bb0d77e" };
+const serverManifest = { "entry": { "module": "/assets/entry.client-ByOfz6iN.js", "imports": ["/assets/jsx-runtime-56DGgGmo.js", "/assets/components-BBsdKsiM.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/root-BY4d-Oaw.js", "imports": ["/assets/jsx-runtime-56DGgGmo.js", "/assets/components-BBsdKsiM.js"], "css": ["/assets/root-Dr1bkvVh.css"] }, "routes/transactions._index": { "id": "routes/transactions._index", "parentId": "root", "path": "transactions", "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/transactions._index-Bi4mNUYp.js", "imports": ["/assets/jsx-runtime-56DGgGmo.js", "/assets/localStorage-DrmKea_W.js", "/assets/components-BBsdKsiM.js"], "css": [] }, "routes/products._index": { "id": "routes/products._index", "parentId": "root", "path": "products", "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/products._index-DTJf7jrr.js", "imports": ["/assets/jsx-runtime-56DGgGmo.js", "/assets/localStorage-DrmKea_W.js", "/assets/components-BBsdKsiM.js"], "css": [] }, "routes/products.new": { "id": "routes/products.new", "parentId": "root", "path": "products/new", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/products.new-zYZrmXM3.js", "imports": ["/assets/jsx-runtime-56DGgGmo.js", "/assets/localStorage-DrmKea_W.js", "/assets/components-BBsdKsiM.js"], "css": [] }, "routes/dashboard": { "id": "routes/dashboard", "parentId": "root", "path": "dashboard", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/dashboard-B7bhJ17G.js", "imports": ["/assets/jsx-runtime-56DGgGmo.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/_index": { "id": "routes/_index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/_index-ifoNFVU3.js", "imports": ["/assets/jsx-runtime-56DGgGmo.js", "/assets/components-BBsdKsiM.js"], "css": [] } }, "url": "/assets/manifest-2e3b6328.js", "version": "2e3b6328" };
 const mode = "production";
 const assetsBuildDirectory = "build/client";
 const basename = "/";

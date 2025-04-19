@@ -1,26 +1,22 @@
-import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useEffect, useState } from "react";
 import { getProducts, getTransactions } from "~/utils/localStorage";
-
-export async function loader() {
-  const products = getProducts();
-  const transactions = getTransactions();
-
-  const totalProducts = products.length;
-  const totalStock = products.reduce((sum, product) => sum + product.quantity, 0);
-  const lowStockProducts = products.filter(product => product.quantity < 10);
-  const recentTransactions = transactions.slice(-5);
-
-  return json({
-    totalProducts,
-    totalStock,
-    lowStockProducts,
-    recentTransactions
-  });
-}
+import type { Product, InventoryTransaction } from "~/models/types";
 
 export default function Dashboard() {
-  const { totalProducts, totalStock, lowStockProducts, recentTransactions } = useLoaderData<typeof loader>();
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalStock, setTotalStock] = useState(0);
+  const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<InventoryTransaction[]>([]);
+
+  useEffect(() => {
+    const products = getProducts();
+    const transactions = getTransactions();
+
+    setTotalProducts(products.length);
+    setTotalStock(products.reduce((sum, product) => sum + product.quantity, 0));
+    setLowStockProducts(products.filter(product => product.quantity < 10));
+    setRecentTransactions(transactions.slice(-5));
+  }, []); // Empty dependency array means this runs once when component mounts
 
   return (
     <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">

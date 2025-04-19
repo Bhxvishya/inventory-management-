@@ -7,7 +7,6 @@ import {
 } from "@remix-run/react";
 import type { LinksFunction } from "@remix-run/node";
 import Header from "./components/Header";
-import { getHeaders } from './headers';
 
 import "./tailwind.css";
 
@@ -24,9 +23,7 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export function headers() {
-  return getHeaders();
-}
+export { headers } from './entry.headers';
 
 export default function App() {
   return (
