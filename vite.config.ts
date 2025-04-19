@@ -3,24 +3,12 @@ import { vitePlugin as remix } from "@remix-run/dev";
 import path from "path";
 
 export default defineConfig({
-  build: {
-    outDir: "build/client",
-    rollupOptions: {
-      output: {
-        assetFileNames: "assets/[name]-[hash][extname]",
-        chunkFileNames: "assets/[name]-[hash].js",
-        entryFileNames: "assets/[name]-[hash].js"
-      }
-    }
-  },
-  ssr: {
-    noExternal: ["remix"],
+  server: {
+    port: 3000
   },
   plugins: [
     remix({
-      serverModuleFormat: "esm",
       ignoredRouteFiles: ["**/.*"],
-      publicPath: "/build/"
     }),
   ],
   resolve: {

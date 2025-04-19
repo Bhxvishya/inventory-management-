@@ -1,8 +1,10 @@
 import { PassThrough } from "stream";
 import type { EntryContext } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
-import { isbot } from "isbot";
+import * as isbot from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
+import type { ReactNode } from 'react';
+import { createReadableStreamFromReadable } from "@remix-run/node";
 
 const ABORT_DELAY = 5000;
 
@@ -40,15 +42,16 @@ function handleBotRequest(
         context={remixContext}
         url={request.url}
         abortDelay={ABORT_DELAY}
-      />,
+      /> as ReactNode,
       {
         onAllReady() {
           const body = new PassThrough();
+          const stream = createReadableStreamFromReadable(body);
 
           responseHeaders.set("Content-Type", "text/html");
 
           resolve(
-            new Response(body, {
+            new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
             })
@@ -82,15 +85,16 @@ function handleBrowserRequest(
         context={remixContext}
         url={request.url}
         abortDelay={ABORT_DELAY}
-      />,
+      /> as ReactNode,
       {
         onShellReady() {
           const body = new PassThrough();
+          const stream = createReadableStreamFromReadable(body);
 
           responseHeaders.set("Content-Type", "text/html");
 
           resolve(
-            new Response(body, {
+            new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
             })

@@ -1,15 +1,95 @@
 import { jsx, jsxs } from "react/jsx-runtime";
-import { RemixServer, Link, Meta, Links, Outlet, ScrollRestoration, Scripts, useNavigate, Form } from "@remix-run/react";
-import { renderToString } from "react-dom/server";
+import { PassThrough } from "stream";
+import { RemixServer, Link, Meta, Links, Outlet, ScrollRestoration, Scripts, useNavigate, Form, useLoaderData } from "@remix-run/react";
+import * as isbot from "isbot";
+import { renderToPipeableStream } from "react-dom/server";
+import { createReadableStreamFromReadable, json } from "@remix-run/node";
 import { useState, useEffect } from "react";
+const ABORT_DELAY = 5e3;
 function handleRequest(request, responseStatusCode, responseHeaders, remixContext) {
-  const markup = renderToString(
-    /* @__PURE__ */ jsx(RemixServer, { context: remixContext, url: request.url })
+  const userAgent = request.headers.get("user-agent");
+  return isbot.isbot(userAgent || "") ? handleBotRequest(
+    request,
+    responseStatusCode,
+    responseHeaders,
+    remixContext
+  ) : handleBrowserRequest(
+    request,
+    responseStatusCode,
+    responseHeaders,
+    remixContext
   );
-  responseHeaders.set("Content-Type", "text/html");
-  return new Response(`<!DOCTYPE html>${markup}`, {
-    status: responseStatusCode,
-    headers: responseHeaders
+}
+function handleBotRequest(request, responseStatusCode, responseHeaders, remixContext) {
+  return new Promise((resolve, reject) => {
+    const { pipe, abort } = renderToPipeableStream(
+      /* @__PURE__ */ jsx(
+        RemixServer,
+        {
+          context: remixContext,
+          url: request.url,
+          abortDelay: ABORT_DELAY
+        }
+      ),
+      {
+        onAllReady() {
+          const body = new PassThrough();
+          const stream = createReadableStreamFromReadable(body);
+          responseHeaders.set("Content-Type", "text/html");
+          resolve(
+            new Response(stream, {
+              headers: responseHeaders,
+              status: responseStatusCode
+            })
+          );
+          pipe(body);
+        },
+        onShellError(error) {
+          reject(error);
+        },
+        onError(error) {
+          responseStatusCode = 500;
+          console.error(error);
+        }
+      }
+    );
+    setTimeout(abort, ABORT_DELAY);
+  });
+}
+function handleBrowserRequest(request, responseStatusCode, responseHeaders, remixContext) {
+  return new Promise((resolve, reject) => {
+    const { pipe, abort } = renderToPipeableStream(
+      /* @__PURE__ */ jsx(
+        RemixServer,
+        {
+          context: remixContext,
+          url: request.url,
+          abortDelay: ABORT_DELAY
+        }
+      ),
+      {
+        onShellReady() {
+          const body = new PassThrough();
+          const stream = createReadableStreamFromReadable(body);
+          responseHeaders.set("Content-Type", "text/html");
+          resolve(
+            new Response(stream, {
+              headers: responseHeaders,
+              status: responseStatusCode
+            })
+          );
+          pipe(body);
+        },
+        onShellError(error) {
+          reject(error);
+        },
+        onError(error) {
+          console.error(error);
+          responseStatusCode = 500;
+        }
+      }
+    );
+    setTimeout(abort, ABORT_DELAY);
   });
 }
 const entryServer = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
@@ -428,6 +508,71 @@ const route3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   __proto__: null,
   default: NewProduct
 }, Symbol.toStringTag, { value: "Module" }));
+async function loader() {
+  const products = getProducts();
+  const transactions = getTransactions();
+  const totalProducts = products.length;
+  const totalStock = products.reduce((sum, product) => sum + product.quantity, 0);
+  const lowStockProducts = products.filter((product) => product.quantity < 10);
+  const recentTransactions = transactions.slice(-5);
+  return json({
+    totalProducts,
+    totalStock,
+    lowStockProducts,
+    recentTransactions
+  });
+}
+function Dashboard() {
+  const { totalProducts, totalStock, lowStockProducts, recentTransactions } = useLoaderData();
+  return /* @__PURE__ */ jsxs("div", { className: "max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8", children: [
+    /* @__PURE__ */ jsx("h1", { className: "text-3xl font-bold text-gray-900 mb-6", children: "Dashboard" }),
+    /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8", children: [
+      /* @__PURE__ */ jsxs("div", { className: "bg-white p-6 rounded-lg shadow", children: [
+        /* @__PURE__ */ jsx("h2", { className: "text-lg font-semibold text-gray-900 mb-2", children: "Total Products" }),
+        /* @__PURE__ */ jsx("p", { className: "text-3xl font-bold text-blue-600", children: totalProducts })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "bg-white p-6 rounded-lg shadow", children: [
+        /* @__PURE__ */ jsx("h2", { className: "text-lg font-semibold text-gray-900 mb-2", children: "Total Stock" }),
+        /* @__PURE__ */ jsx("p", { className: "text-3xl font-bold text-green-600", children: totalStock })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "bg-white p-6 rounded-lg shadow", children: [
+        /* @__PURE__ */ jsx("h2", { className: "text-lg font-semibold text-gray-900 mb-2", children: "Low Stock Items" }),
+        /* @__PURE__ */ jsx("p", { className: "text-3xl font-bold text-red-600", children: lowStockProducts.length })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 lg:grid-cols-2 gap-6", children: [
+      /* @__PURE__ */ jsxs("div", { className: "bg-white p-6 rounded-lg shadow", children: [
+        /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold text-gray-900 mb-4", children: "Low Stock Products" }),
+        /* @__PURE__ */ jsx("div", { className: "divide-y divide-gray-200", children: lowStockProducts.map((product) => /* @__PURE__ */ jsxs("div", { className: "py-3", children: [
+          /* @__PURE__ */ jsx("h3", { className: "text-sm font-medium text-gray-900", children: product.name }),
+          /* @__PURE__ */ jsxs("p", { className: "text-sm text-gray-500", children: [
+            "Quantity: ",
+            product.quantity
+          ] })
+        ] }, product.id)) })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "bg-white p-6 rounded-lg shadow", children: [
+        /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold text-gray-900 mb-4", children: "Recent Transactions" }),
+        /* @__PURE__ */ jsx("div", { className: "divide-y divide-gray-200", children: recentTransactions.map((transaction) => /* @__PURE__ */ jsxs("div", { className: "py-3", children: [
+          /* @__PURE__ */ jsxs("p", { className: "text-sm text-gray-500", children: [
+            new Date(transaction.date).toLocaleDateString(),
+            " - ",
+            transaction.type
+          ] }),
+          /* @__PURE__ */ jsxs("p", { className: "text-sm font-medium text-gray-900", children: [
+            "Quantity: ",
+            transaction.quantity
+          ] })
+        ] }, transaction.id)) })
+      ] })
+    ] })
+  ] });
+}
+const route4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: Dashboard,
+  loader
+}, Symbol.toStringTag, { value: "Module" }));
 const meta = () => {
   return [
     { title: "Inventory Management System" },
@@ -474,12 +619,12 @@ function Index() {
     ] })
   ] }) }) });
 }
-const route4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route5 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Index,
   meta
 }, Symbol.toStringTag, { value: "Module" }));
-const serverManifest = { "entry": { "module": "/assets/entry.client-DCCX-5W3.js", "imports": ["/assets/components-CTKjQCnL.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/root-Bfpx-Eyj.js", "imports": ["/assets/components-CTKjQCnL.js"], "css": ["/assets/root-xXtehpwV.css"] }, "routes/transactions._index": { "id": "routes/transactions._index", "parentId": "root", "path": "transactions", "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/transactions._index-B9qnonzk.js", "imports": ["/assets/components-CTKjQCnL.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/products._index": { "id": "routes/products._index", "parentId": "root", "path": "products", "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/products._index-BNTbo5yc.js", "imports": ["/assets/components-CTKjQCnL.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/products.new": { "id": "routes/products.new", "parentId": "root", "path": "products/new", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/products.new-ENvxHMgE.js", "imports": ["/assets/components-CTKjQCnL.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/_index": { "id": "routes/_index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/_index-BGF7HF_Q.js", "imports": ["/assets/components-CTKjQCnL.js"], "css": [] } }, "url": "/assets/manifest-79486253.js", "version": "79486253" };
+const serverManifest = { "entry": { "module": "/assets/entry.client-CR6ePU5x.js", "imports": ["/assets/components-8xdznDkx.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/root-D5--ZP3u.js", "imports": ["/assets/components-8xdznDkx.js"], "css": ["/assets/root-Dr1bkvVh.css"] }, "routes/transactions._index": { "id": "routes/transactions._index", "parentId": "root", "path": "transactions", "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/transactions._index-B7e2x3Gj.js", "imports": ["/assets/components-8xdznDkx.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/products._index": { "id": "routes/products._index", "parentId": "root", "path": "products", "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/products._index-CgZQILyS.js", "imports": ["/assets/components-8xdznDkx.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/products.new": { "id": "routes/products.new", "parentId": "root", "path": "products/new", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/products.new-dCyakr9p.js", "imports": ["/assets/components-8xdznDkx.js", "/assets/localStorage-DrmKea_W.js"], "css": [] }, "routes/dashboard": { "id": "routes/dashboard", "parentId": "root", "path": "dashboard", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/dashboard-BpVymz0w.js", "imports": ["/assets/components-8xdznDkx.js"], "css": [] }, "routes/_index": { "id": "routes/_index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasErrorBoundary": false, "module": "/assets/_index-Bj7pYZeS.js", "imports": ["/assets/components-8xdznDkx.js"], "css": [] } }, "url": "/assets/manifest-6bb0d77e.js", "version": "6bb0d77e" };
 const mode = "production";
 const assetsBuildDirectory = "build/client";
 const basename = "/";
@@ -520,13 +665,21 @@ const routes = {
     caseSensitive: void 0,
     module: route3
   },
+  "routes/dashboard": {
+    id: "routes/dashboard",
+    parentId: "root",
+    path: "dashboard",
+    index: void 0,
+    caseSensitive: void 0,
+    module: route4
+  },
   "routes/_index": {
     id: "routes/_index",
     parentId: "root",
     path: void 0,
     index: true,
     caseSensitive: void 0,
-    module: route4
+    module: route5
   }
 };
 export {
