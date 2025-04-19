@@ -17,8 +17,8 @@
     # Removed CSP here (let entry.headers.tsx handle it)
 
 [[redirects]]
-  from = "/_static/*"
-  to = "/_static/:splat"
+  from = "/assets/*"
+  to = "/build/client/assets/:splat"
   status = 200
 
 [[redirects]]
@@ -27,11 +27,11 @@
   status = 200
 
 [[redirects]]
-  from = "/assets/*"
-  to = "/assets/:splat"
+  from = "/_static/*"
+  to = "/_static/:splat"
   status = 200
 
-# This is the critical SSR route
+# 👇 SSR catch-all route (last)
 [[redirects]]
   from = "/*"
   to = "/.netlify/functions/server"
