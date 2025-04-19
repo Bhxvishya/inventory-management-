@@ -1,6 +1,13 @@
-# Welcome to Remix!
+# A simple Inventory Management App
 
 - ð [Remix docs](https://remix.run/docs)
+
+## Install
+
+'''sh
+npm install
+'''
+
 
 ## Development
 
