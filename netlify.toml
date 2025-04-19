@@ -1,6 +1,5 @@
 [build]
   command = "npm run build"
-  publish = "build/client"
   functions = "netlify/functions"
 
 [dev]
@@ -32,6 +31,7 @@
   to = "/assets/:splat"
   status = 200
 
+# This is the critical SSR route
 [[redirects]]
   from = "/*"
   to = "/.netlify/functions/server"
