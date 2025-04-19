@@ -18,11 +18,8 @@ export default defineConfig({
   },
   plugins: [
     remix({
-      basename: "/",
-      buildDirectory: "build",
       serverModuleFormat: "esm",
       ignoredRouteFiles: ["**/.*"],
-      assetsBuildDirectory: "build/client/assets",
       publicPath: "/build/"
     }),
   ],

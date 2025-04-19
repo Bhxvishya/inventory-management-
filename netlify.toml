@@ -3,14 +3,18 @@
   publish = "build/client"
   functions = "netlify/functions"
 
+[dev]
+  command = "npm run dev"
+  port = 3000
+
 [[redirects]]
-  from = "/build/*"
-  to = "/build/:splat"
+  from = "/_static/*"
+  to = "/_static/:splat"
   status = 200
 
 [[redirects]]
-  from = "/assets/*"
-  to = "/assets/:splat"
+  from = "/build/*"
+  to = "/build/:splat"
   status = 200
 
 [[redirects]]
