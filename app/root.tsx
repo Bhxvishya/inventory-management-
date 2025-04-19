@@ -31,7 +31,6 @@ export default function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="referrer" content="strict-origin-when-cross-origin" />
         <Meta />
         <Links />
@@ -45,3 +44,18 @@ export default function App() {
     </html>
   );
 }
+
+export function ErrorBoundary({ error }: { error: Error }) {
+  return (
+    <html>
+      <head>
+        <title>App Error</title>
+      </head>
+      <body>
+        <h1>Something went wrong</h1>
+        <pre>{error.message}</pre>
+      </body>
+    </html>
+  );
+}
+
