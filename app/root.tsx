@@ -7,6 +7,7 @@ import {
 } from "@remix-run/react";
 import type { LinksFunction } from "@remix-run/node";
 import Header from "./components/Header";
+import { getHeaders } from './headers';
 
 import "./tailwind.css";
 
@@ -22,6 +23,10 @@ export const links: LinksFunction = () => [
     href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
   },
 ];
+
+export function headers() {
+  return getHeaders();
+}
 
 export default function App() {
   return (

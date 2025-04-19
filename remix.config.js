@@ -3,5 +3,11 @@ module.exports = {
     serverBuildTarget: "netlify",
     server: "./server/index.js",
     ignoredRouteFiles: ["**/.*"],
-    // Add other configurations as needed
+    serverModuleFormat: "cjs",
+    future: {
+      v2_errorBoundary: true,
+      v2_meta: true,
+      v2_normalizeFormMethod: true,
+      v2_routeConvention: true,
+    }
   };

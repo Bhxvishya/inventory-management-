@@ -127,6 +127,14 @@ function Header() {
     ] })
   ] }) }) }) });
 }
+function getHeaders(loaderHeaders = new Headers()) {
+  const headers2 = new Headers(loaderHeaders);
+  headers2.set(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'"
+  );
+  return headers2;
+}
 const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -139,6 +147,9 @@ const links = () => [
     href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
   }
 ];
+function headers() {
+  return getHeaders();
+}
 function App() {
   return /* @__PURE__ */ jsxs("html", { lang: "en", className: "h-full bg-gray-100", children: [
     /* @__PURE__ */ jsxs("head", { children: [
@@ -158,6 +169,7 @@ function App() {
 const route0 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: App,
+  headers,
   links
 }, Symbol.toStringTag, { value: "Module" }));
 const PRODUCTS_KEY = "inventory_products";
