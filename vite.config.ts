@@ -5,6 +5,13 @@ import path from "path";
 export default defineConfig({
   build: {
     outDir: "build/client",
+    rollupOptions: {
+      output: {
+        assetFileNames: "assets/[name]-[hash][extname]",
+        chunkFileNames: "assets/[name]-[hash].js",
+        entryFileNames: "assets/[name]-[hash].js"
+      }
+    }
   },
   ssr: {
     noExternal: ["remix"],
@@ -13,6 +20,10 @@ export default defineConfig({
     remix({
       basename: "/",
       buildDirectory: "build",
+      serverModuleFormat: "esm",
+      ignoredRouteFiles: ["**/.*"],
+      assetsBuildDirectory: "build/client/assets",
+      publicPath: "/build/"
     }),
   ],
   resolve: {
